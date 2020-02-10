@@ -1,8 +1,8 @@
 package com.etsy.sbt.checkstyle
 
-import sbt.File
+import java.net.URLClassLoader
 
-import scala.io.Source
+import scala.xml.{Node, XML}
 
 /**
   * Represents a Checkstyle XML configuration located locally, on the class path or remotely at a URL
@@ -10,23 +10,25 @@ import scala.io.Source
   * @author Joseph Earl
   */
 sealed abstract class CheckstyleConfigLocation(val location: String) {
-    def read(resources: Seq[File]): String
+  def read(): xml.Node
+}
+
+object CheckstyleConfigLocation {
+  case class URL(url: String) extends CheckstyleConfigLocation(url) {
+    override def read(): Node = XML.load(url)
   }
 
-  object CheckstyleConfigLocation {
-    case class URL(url: String) extends CheckstyleConfigLocation(url) {
-      override def read(resources: Seq[sbt.File]): String = Source.fromURL(url).mkString
-    }
+  case class File(path: String) extends CheckstyleConfigLocation(path) {
+    override def read(): Node = XML.loadFile(path)
+  }
 
-    case class File(path: String) extends CheckstyleConfigLocation(path) {
-      override def read(resources: Seq[sbt.File]): String = Source.fromFile(path).mkString
-    }
-
-    case class Classpath(name: String) extends CheckstyleConfigLocation(name) {
-      override def read(resources: Seq[sbt.File]): String = {
-        val classpath = resources.map((f) => f.toURI.toURL)
-        val loader = new java.net.URLClassLoader(classpath.toArray, getClass.getClassLoader)
-        Source.fromInputStream(loader.getResourceAsStream(name)).mkString
-      }
+  case class Classpath(name: String, cp: sbt.Def.Classpath)
+      extends CheckstyleConfigLocation(name) {
+    override def read(): Node = {
+      val classpath = cp.map(_.data.toURI.toURL)
+      val loader    = new URLClassLoader(classpath.toArray, getClass.getClassLoader)
+      val is        = loader.getResourceAsStream(name)
+      XML.load(is)
     }
   }
+}

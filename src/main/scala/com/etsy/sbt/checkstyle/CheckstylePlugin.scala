@@ -18,7 +18,7 @@ object CheckstylePlugin extends AutoPlugin {
   object autoImport {
     val checkstyle = TaskKey[Unit]("checkstyle", "Runs checkstyle")
     val checkstyleOutputFile = SettingKey[File]("checkstyle-target", "The location of the generated checkstyle report")
-    val checkstyleConfigLocation = SettingKey[CheckstyleConfigLocation]("checkstyle-config-location", "The location of the checkstyle configuration file")
+    val checkstyleConfigLocation = taskKey[CheckstyleConfigLocation]("The location of the checkstyle configuration file")
     val checkstyleXsltTransformations = SettingKey[Option[Set[CheckstyleXSLTSettings]]]("xslt-transformations", "An optional set of XSLT transformations to be applied to the checkstyle output")
     val checkstyleSeverityLevel = SettingKey[Option[CheckstyleSeverityLevel]]("checkstyle-severity-level", "Sets the severity levels which should fail the build")
 
@@ -32,8 +32,14 @@ object CheckstylePlugin extends AutoPlugin {
       * @param conf The configuration (Compile or Test) in which context to execute the checkstyle command
       */
     def checkstyleTask(conf: Configuration): Initialize[Task[Unit]] = Def.task {
-      Checkstyle.checkstyle((javaSource in conf).value, (resources in Compile).value, (checkstyleOutputFile in conf).value, (checkstyleConfigLocation in conf).value,
-        (checkstyleXsltTransformations in conf).value, (checkstyleSeverityLevel in conf).value, streams.value)
+      Checkstyle.checkstyle(
+        (javaSource in conf).value,
+        (checkstyleOutputFile in conf).value,
+        (checkstyleConfigLocation in conf).value,
+        (checkstyleXsltTransformations in conf).value,
+        (checkstyleSeverityLevel in conf).value,
+        streams.value
+      )
     }
   }
 

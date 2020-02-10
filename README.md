@@ -50,7 +50,10 @@ checkstyleConfigLocation :=
 
 Or load configuration files from the classpath by specifying a resource name:
 ```scala
-checkstyleConfigLocation := CheckstyleConfigLocation.Classpath("com/etsy/checkstyle-config.xml")
+checkstyleConfigLocation := CheckstyleConfigLocation.Classpath(
+"com/etsy/checkstyle-config.xml",
+ (Compile / exportedProducts).value
+)
 ```
 
 To run Checkstyle automatically after compilation:
@@ -142,3 +145,15 @@ scripted
 ```
 + publish:
 https://www.scala-sbt.org/1.x/docs/Bintray-For-Plugins.html
+
+## changelogs
+#### 3.1.2
++ Change organization & name from `"com.etsy" % "sbt-checkstyle-plugin"` to `"com.sandinh" % "sbt-checkstyle"`
++ Update default version of checkstyle from 6.15 to 8.29
++ Drop support for sbt 0.13.x
++ Fix CheckstyleConfigLocation.Classpath (break change):
+  - `checkstyleConfigLocation` is now a TaskKey, not SettingKey
+  - Must migrate `checkstyleConfigLocation := CheckstyleConfigLocation.Classpath(path/to/resource)` to
+    `checkstyleConfigLocation := CheckstyleConfigLocation.Classpath(path/to/resource, a-classpath)`.
+    For example, `a-classpath` can be `(Compile / exportedProducts).value`
++ `sbt-checkstyle` is now published to bintray as in [this guide](https://www.scala-sbt.org/1.x/docs/Bintray-For-Plugins.html)

@@ -24,7 +24,7 @@ object Checkstyle {
     * @param xsltTransformations XSLT transformations to apply.
     * @param severityLevel The severity level used to fail the build.
     */
-  def checkstyle(javaSource: File, resources: Seq[File], outputFile: File, configLocation: CheckstyleConfigLocation,
+  def checkstyle(javaSource: File, outputFile: File, configLocation: CheckstyleConfigLocation,
                  xsltTransformations: Option[Set[CheckstyleXSLTSettings]], severityLevel: Option[CheckstyleSeverityLevel], streams: TaskStreams): Unit = {
     val outputLocation = outputFile.absolutePath
     val targetFolder = outputFile.getParentFile
@@ -32,7 +32,7 @@ object Checkstyle {
 
     targetFolder.mkdirs()
 
-    val config = scala.xml.XML.loadString(configLocation.read(resources))
+    val config = configLocation.read()
     scala.xml.XML.save(configFile, config, "UTF-8", xmlDecl = true,
       scala.xml.dtd.DocType(
         "module",
