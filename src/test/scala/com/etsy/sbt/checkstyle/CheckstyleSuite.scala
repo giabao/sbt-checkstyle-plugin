@@ -1,6 +1,6 @@
 package com.etsy.sbt.checkstyle
 
-import org.scalatest.junit.JUnitSuite
+import org.scalatestplus.junit.JUnitSuite
 import org.junit.Assert._
 import org.junit.Test
 import org.junit.Rule
@@ -18,6 +18,10 @@ class CheckstyleSuite extends JUnitSuite {
     noExit {
       sys.exit(1)
     }
-    assertEquals("Security manager changed after execution", originalSecManager, System.getSecurityManager)
+    assertEquals(
+      "Security manager changed after execution",
+      originalSecManager,
+      System.getSecurityManager
+    )
   }
 }

@@ -1,42 +1,70 @@
-name := "sbt-checkstyle-plugin"
-organization := "com.etsy"
+lazy val user = settingKey[String]("github user use in ScmInfo")
 
-version := "3.1.2-SNAPSHOT"
-
-sbtPlugin := true
-crossSbtVersions := Seq("0.13.16", "1.1.0")
-
-libraryDependencies ++= Seq(
-  "com.puppycrawl.tools"      %  "checkstyle"   % "6.15",
-  "net.sf.saxon"              %  "Saxon-HE"     % "9.6.0-5",
-  "org.scalatest"             %% "scalatest"    % "3.0.4"   % "test",
-  "junit"                     %  "junit"        % "4.11"    % "test",
-  "com.github.stefanbirkner"  %  "system-rules" % "1.6.0"   % "test"
+lazy val publishSettings = Seq(
+  organization := "com.etsy",
+  user := "etsy"
 )
 
-xerial.sbt.Sonatype.sonatypeSettings
-publishTo := sonatypePublishTo.value
+lazy val root = (project in file("."))
+  .enablePlugins(SbtPlugin)
+  .settings(
+    name := "sbt-checkstyle",
+    version := "3.1.2-SNAPSHOT",
+    Compile / doc / sources := Nil,
+    Test / publishArtifact := false,
+    crossScalaVersions := Seq("2.12.10", "2.10.7"),
+    scalaVersion := crossScalaVersions.value.head,
+    pluginCrossBuild / sbtVersion := {
+      scalaBinaryVersion.value match {
+        case "2.10" => "0.13.18"
+        case "2.12" => "1.3.8"
+      }
+    },
+    scriptedLaunchOpts ++= Seq(
+      "-Xmx1024M",
+      "-XX:MaxPermSize=256M",
+      "-Dplugin.version=" + version.value
+    ),
+    scriptedBufferLog := false,
+    libraryDependencies ++= Seq(
+      "com.puppycrawl.tools"     % "checkstyle"   % "8.29",
+      "net.sf.saxon"             % "Saxon-HE"     % "9.9.1-6",
+      "org.scalatest"            %% "scalatest"   % "3.1.0" % Test,
+      "junit"                    % "junit"        % "4.12" % Test,
+      "org.scalatestplus"        %% "junit-4-12"  % "3.1.0.0" % Test,
+      "com.github.stefanbirkner" % "system-rules" % "1.19.0" % Test
+    ),
+    scalastyleConfig := file("scalastyle.xml"),
+    scalastyleFailOnError := true
+  )
+  .settings(infoSettings: _*)
 
-pomExtra := <url>https://github.com/etsy/sbt-checkstyle-plugin</url>
-  <licenses>
-    <license>
-      <name>MIT License</name>
-      <url>http://opensource.org/licenses/MIT</url>
-      <distribution>repo</distribution>
-    </license>
-  </licenses>
-  <scm>
-    <url>git@github.com:etsy/sbt-checkstyle-plugin.git</url>
-    <connection>scm:git:git@github.com:etsy/sbt-checkstyle-plugin.git</connection>
-  </scm>
-  <developers>
-    <developer>
-      <id>ajsquared</id>
-      <name>Andrew Johnson</name>
-      <url>github.com/ajsquared</url>
-    </developer>
-  </developers>
-
-scalastyleConfig := file("scalastyle.xml")
-
-scalastyleFailOnError := true
+lazy val infoSettings = publishSettings ++ Seq(
+  publishMavenStyle := false,
+  bintrayRepository := "sbt-plugins",
+  bintrayOrganization in bintray := None,
+  bintrayPackageLabels := Seq(
+    "sbt",
+    "sbt-checkstyle",
+    "checkstyle"
+  ),
+  licenses := Seq("MIT" -> url("http://opensource.org/licenses/MIT")),
+  developers := List(
+    Developer(
+      "ajsquared",
+      "Andrew Johnson",
+      "andrew@andrewjamesjohnson.com",
+      url("https://github.com/ajsquared")
+    ),
+    Developer("ohze", "Bùi Việt Thành", "thanhbv@sandinh.net", url("https://sandinh.com"))
+  ),
+  scmInfo := {
+    val u = user.value
+    Some(
+      ScmInfo(
+        url(s"https://github.com/$u/sbt-checkstyle-plugin"),
+        s"scm:git:git://github.com:$u/sbt-checkstyle-plugin"
+      )
+    )
+  }
+)
