@@ -27,7 +27,7 @@ object CheckstyleConfigLocation {
 
   def Classpath(name: String, classpath: TaskKey[Classpath]): Initialize[Task[File]] =
     Def.task[File] {
-      resource(name, target.value, classpath.value)
+      resource(name, target.value, Some(classpath.value))
     }
 
   def Classpath(name: String): Initialize[Task[File]] = Def.task[File] {
@@ -35,13 +35,12 @@ object CheckstyleConfigLocation {
   }
   // scalastyle:on method.name
 
-  private def resource(name: String, target: File, classpath: Classpath = null) = {
-    val loader =
-      if (classpath == null) getClass.getClassLoader
-      else {
-        val cp = classpath.map(_.data.toURI.toURL)
-        new URLClassLoader(cp.toArray, getClass.getClassLoader)
-      }
+  private def resource(name: String, target: File, classpath: Option[Classpath] = None) = {
+    val loader = classpath match {
+      case None => getClass.getClassLoader
+      case Some(cp) =>
+        new URLClassLoader(cp.map(_.data.toURI.toURL).toArray, getClass.getClassLoader)
+    }
     val is = loader.getResourceAsStream(name)
     save(XML.load(is), target)
   }
