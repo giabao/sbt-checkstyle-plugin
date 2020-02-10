@@ -18,8 +18,10 @@ object CheckstylePlugin extends AutoPlugin {
 
   object autoImport {
     // https://github.com/sbt/sbt/issues/5049#issuecomment-528801726
+    // scalastyle:off method.name
     private[this] def SettingKey[T: Manifest](label: String, description: String = "") =
       sbt.SettingKey[T](label, description)(implicitly, NoJsonWriter())
+    // scalastyle:on method.name
 
     val checkstyle = TaskKey[Unit]("checkstyle", "Runs checkstyle")
     val checkstyleOutputFile = SettingKey[File]("checkstyle-target", "The location of the generated checkstyle report")

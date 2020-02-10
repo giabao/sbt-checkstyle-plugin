@@ -15,6 +15,7 @@ import scala.xml.XML
   */
 object CheckstyleConfigLocation {
   @deprecated("use a file setting directly, ex baseDirectory.value / \"some_path\"", "3.2.0")
+  // scalastyle:off method.name
   def File(path: String): Initialize[File] = Def.setting[File] {
     (ThisBuild / baseDirectory).value / path
   }
@@ -32,6 +33,7 @@ object CheckstyleConfigLocation {
     Def.task[File] {
       resource(name, (Compile / fullClasspath).value, target.value)
     }
+  // scalastyle:on method.name
 
   private def resource(name: String, classpath: Classpath, target: File) = {
     val cp     = classpath.map(_.data.toURI.toURL)

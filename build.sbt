@@ -22,8 +22,6 @@ lazy val root = (project in file("."))
     scriptedBufferLog := false,
     libraryDependencies ++= Seq(
       "com.puppycrawl.tools"     % "checkstyle"   % "8.29",
-//      "com.puppycrawl.tools"     % "checkstyle"   % "8.29" exclude ("com.google.guava", "listenablefuture"),
-//      "com.google.guava"         % "listenablefuture" % "9999.0-empty-to-avoid-conflict-with-guava" jar(),
       "net.sf.saxon"             % "Saxon-HE"     % "9.9.1-6",
       "org.scalatest"            %% "scalatest"   % "3.1.0" % Test,
       "junit"                    % "junit"        % "4.12" % Test,
