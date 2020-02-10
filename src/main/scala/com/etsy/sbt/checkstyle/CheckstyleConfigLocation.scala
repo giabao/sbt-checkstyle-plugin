@@ -7,6 +7,7 @@ import sbt.Keys._
 import sbt.{Def, _}
 
 import scala.xml.XML
+import scala.xml.dtd.{DocType, PublicID}
 
 /**
   * Represents a Checkstyle XML configuration located locally, on the class path or remotely at a URL
@@ -26,33 +27,35 @@ object CheckstyleConfigLocation {
 
   def Classpath(name: String, classpath: TaskKey[Classpath]): Initialize[Task[File]] =
     Def.task[File] {
-      resource(name, classpath.value, target.value)
+      resource(name, target.value, classpath.value)
     }
 
-  def Classpath(name: String): Initialize[Task[File]] =
-    Def.task[File] {
-      resource(name, (Compile / fullClasspath).value, target.value)
-    }
+  def Classpath(name: String): Initialize[Task[File]] = Def.task[File] {
+    resource(name, target.value)
+  }
   // scalastyle:on method.name
 
-  private def resource(name: String, classpath: Classpath, target: File) = {
-    val cp     = classpath.map(_.data.toURI.toURL)
-    val loader = new URLClassLoader(cp.toArray, getClass.getClassLoader)
-    val is     = loader.getResourceAsStream(name)
-    XML.load(is)
+  private def resource(name: String, target: File, classpath: Classpath = null) = {
+    val loader =
+      if (classpath == null) getClass.getClassLoader
+      else {
+        val cp = classpath.map(_.data.toURI.toURL)
+        new URLClassLoader(cp.toArray, getClass.getClassLoader)
+      }
+    val is = loader.getResourceAsStream(name)
     save(XML.load(is), target)
   }
 
   private def save(config: xml.Elem, targetFolder: File) = {
     val configFile = targetFolder / "checkstyle-config.xml"
-    scala.xml.XML.save(
+    XML.save(
       configFile.getAbsolutePath,
       config,
       "UTF-8",
       xmlDecl = true,
-      scala.xml.dtd.DocType(
+      DocType(
         "module",
-        scala.xml.dtd.PublicID(
+        PublicID(
           "-//Puppy Crawl//DTD Check Configuration 1.3//EN",
           "https://checkstyle.org/dtds/configuration_1_3.dtd"
         ),
