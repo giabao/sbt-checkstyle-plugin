@@ -129,3 +129,16 @@ dependencyOverrides += "com.puppycrawl.tools" % "checkstyle" % "6.15"
 * *Description:* Decide how much effort to put into analysis.
 * *Accepts:* `Some(CheckstyleSeverityLevel.{Ignore, Info, Warning, Error})`
 * *Default:* `None`
+
+## dev guide
++ clone
++ using IntelliJ
++ Set IntelliJ using scalafmt code formatter
++ sbt
+```sbtshell
+test
+scalastyle
+scripted
+```
++ publish:
+https://www.scala-sbt.org/1.x/docs/Bintray-For-Plugins.html
