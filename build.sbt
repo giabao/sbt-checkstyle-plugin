@@ -12,14 +12,8 @@ lazy val root = (project in file("."))
     version := "3.1.2-SNAPSHOT",
     Compile / doc / sources := Nil,
     Test / publishArtifact := false,
-    crossScalaVersions := Seq("2.12.10", "2.10.7"),
-    scalaVersion := crossScalaVersions.value.head,
-    pluginCrossBuild / sbtVersion := {
-      scalaBinaryVersion.value match {
-        case "2.10" => "0.13.18"
-        case "2.12" => "1.3.8"
-      }
-    },
+    scalaVersion := "2.12.10",
+    pluginCrossBuild / sbtVersion := "1.3.8",
     scriptedLaunchOpts ++= Seq(
       "-Xmx1024M",
       "-Dplugin.version=" + version.value,
