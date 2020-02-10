@@ -34,8 +34,15 @@ object Checkstyle {
 
     val config = scala.xml.XML.loadString(configLocation.read(resources))
     scala.xml.XML.save(configFile, config, "UTF-8", xmlDecl = true,
-      scala.xml.dtd.DocType("module", scala.xml.dtd.PublicID("-//Puppy Crawl//DTD Check Configuration 1.3//EN",
-        "http://www.puppycrawl.com/dtds/configuration_1_3.dtd"), Nil))
+      scala.xml.dtd.DocType(
+        "module",
+        scala.xml.dtd.PublicID(
+          "-//Puppy Crawl//DTD Check Configuration 1.3//EN",
+          "https://checkstyle.org/dtds/configuration_1_3.dtd"
+        ),
+        Nil
+      )
+    )
 
     val checkstyleArgs = Array(
       "-c", configFile, // checkstyle configuration file
