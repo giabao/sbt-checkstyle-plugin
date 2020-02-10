@@ -22,8 +22,8 @@ lazy val root = (project in file("."))
     },
     scriptedLaunchOpts ++= Seq(
       "-Xmx1024M",
-      "-XX:MaxPermSize=256M",
-      "-Dplugin.version=" + version.value
+      "-Dplugin.version=" + version.value,
+      "-Dplugin.org=" + organization.value
     ),
     scriptedBufferLog := false,
     libraryDependencies ++= Seq(
