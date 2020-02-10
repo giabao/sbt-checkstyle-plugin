@@ -4,4 +4,4 @@ name := "checkstyle-test"
 
 organization := "com.etsy"
 
-checkstyleConfigLocation := CheckstyleConfigLocation.File("checkstyle-config.xml")
+checkstyleConfigLocation := CheckstyleConfigLocation.File("checkstyle-config.xml").value

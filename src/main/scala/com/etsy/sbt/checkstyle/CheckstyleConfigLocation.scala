@@ -4,7 +4,7 @@ import java.net.URLClassLoader
 
 import sbt.Def.Initialize
 import sbt.Keys._
-import sbt._
+import sbt.{Def, _}
 
 import scala.xml.XML
 
@@ -15,21 +15,21 @@ import scala.xml.XML
   */
 object CheckstyleConfigLocation {
   @deprecated("use a file setting directly, ex baseDirectory.value / \"some_path\"", "3.2.0")
-  def File(path: String): Initialize[Task[File]] = sbt.Def.task[File] {
+  def File(path: String): Initialize[File] = Def.setting[File] {
     (ThisBuild / baseDirectory).value / path
   }
 
-  def URL(url: String): Initialize[Task[File]] = sbt.Def.task[File] {
+  def URL(url: String): Initialize[Task[File]] = Def.task[File] {
     save(XML.load(sbt.url(url)), target.value)
   }
 
-  def Classpath(name: String, classpath: Classpath): Initialize[Task[File]] =
-    sbt.Def.task[File] {
-      resource(name, classpath, target.value)
+  def Classpath(name: String, classpath: TaskKey[Classpath]): Initialize[Task[File]] =
+    Def.task[File] {
+      resource(name, classpath.value, target.value)
     }
 
   def Classpath(name: String): Initialize[Task[File]] =
-    sbt.Def.task[File] {
+    Def.task[File] {
       resource(name, (Compile / fullClasspath).value, target.value)
     }
 

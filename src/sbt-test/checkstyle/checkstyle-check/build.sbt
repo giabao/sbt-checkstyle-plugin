@@ -4,5 +4,5 @@ name := "checkstyle-check"
 
 organization := "com.etsy"
 
-checkstyleConfigLocation := CheckstyleConfigLocation.File("my-checkstyle-config.xml")
+checkstyleConfigLocation := baseDirectory.value / "my-checkstyle-config.xml"
 checkstyleSeverityLevel := Some(CheckstyleSeverityLevel.Error)

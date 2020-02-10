@@ -44,18 +44,19 @@ checkstyleConfigLocation := baseDirectory.value / "checkstyle-config.xml"
 
 You can also load remote configuration files by specifying a URL:
 ```scala
-checkstyleConfigLocation :=
-  CheckstyleConfigLocation.URL("https://raw.githubusercontent.com/checkstyle/checkstyle/master/config/checkstyle_checks.xml")
+checkstyleConfigLocation := CheckstyleConfigLocation.URL(
+  "https://raw.githubusercontent.com/checkstyle/checkstyle/master/config/checkstyle_checks.xml"
+).value
 ```
 
 Or load configuration files from the classpath by specifying a resource name and an optional ClassPath:
 ```scala
-checkstyleConfigLocation := CheckstyleConfigLocation.Classpath("com/etsy/checkstyle-config.xml")
+checkstyleConfigLocation := CheckstyleConfigLocation.Classpath("com/etsy/checkstyle-config.xml").value
 // or
 checkstyleConfigLocation := CheckstyleConfigLocation.Classpath(
   "google_checks.xml", // google_checks.xml is in com.puppycrawl.tools:checkstyle:<version> jar file
-  (Compile / managedClasspath).value
-)
+  Compile / managedClasspath
+).value
 ```
 
 To run Checkstyle automatically after compilation:
@@ -122,7 +123,7 @@ dependencyOverrides += "com.puppycrawl.tools" % "checkstyle" % "8.29"
 
 ### `checkstyleConfigLocation`
 * *Description:* The location of the checkstyle configuration file.
-* *Accepts:* `File`, ex: `baseDirectory).value / "checkstyle-config.xml"`
+* *Accepts:* `File`, ex: `baseDirectory.value / "checkstyle-config.xml"`
  or use one of CheckstyleConfigLocation's method: `URL(url: String)` | `Classpath(name: String, classpath: Classpath = (Compile / fullClasspath).value}`
 * *Default:* `checkstyle-config.xml` file in root project
 
@@ -154,8 +155,21 @@ https://www.scala-sbt.org/1.x/docs/Bintray-For-Plugins.html
 + Change organization & name from `"com.etsy" % "sbt-checkstyle-plugin"` to `"com.sandinh" % "sbt-checkstyle"`
 + Update default version of checkstyle from 6.15 to 8.29
 + Drop support for sbt 0.13.x
-+ `checkstyleConfigLocation` is now a `TaskKey[File]`, not `SettingKey[CheckstyleConfigLocation]`
-   (source backward compatible)
++ break change: `checkstyleConfigLocation` is now a `TaskKey[File]`, not `SettingKey[CheckstyleConfigLocation]`
+  and `CheckstyleConfigLocation.{File, URL, Classpath}` now return a Setting instead of a pure value.
+  
+  Migrate:
+  ```sbt
+  checkstyleConfigLocation := CheckstyleConfigLocation.File("path")
+  checkstyleConfigLocation := CheckstyleConfigLocation.URL("url")
+  checkstyleConfigLocation := CheckstyleConfigLocation.Classpath("name")
+  ```
+  =>
+  ```sbt
+  checkstyleConfigLocation := baseDirectory.value / "path"
+  checkstyleConfigLocation := CheckstyleConfigLocation.URL("url").value
+  checkstyleConfigLocation := CheckstyleConfigLocation.Classpath("name").value
+  ```
 + Fix CheckstyleConfigLocation.Classpath (`checkstyle-config-classpath` sbt-test failed)
 + Add `CheckstyleConfigLocation.Classpath(path/to/resource, a-classpath)`.
   For example, `a-classpath` can be `(Compile / exportedProducts).value`

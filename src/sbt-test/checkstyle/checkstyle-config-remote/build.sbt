@@ -4,5 +4,6 @@ name := "checkstyle-config-remote"
 
 organization := "com.etsy"
 
-checkstyleConfigLocation :=
-  CheckstyleConfigLocation.URL("https://raw.githubusercontent.com/giabao/sbt-checkstyle-plugin/master/src/sbt-test/checkstyle/checkstyle/checkstyle-config.xml")
+checkstyleConfigLocation := CheckstyleConfigLocation.URL(
+  "https://raw.githubusercontent.com/giabao/sbt-checkstyle-plugin/master/src/sbt-test/checkstyle/checkstyle/checkstyle-config.xml"
+).value

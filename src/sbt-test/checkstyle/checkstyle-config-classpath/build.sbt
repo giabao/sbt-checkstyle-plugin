@@ -6,5 +6,5 @@ organization := "com.etsy"
 
 checkstyleConfigLocation := CheckstyleConfigLocation.Classpath(
   "com/etsy/sbt/google_checks.xml",
-  (Compile / exportedProducts).value
-)
+  Compile / exportedProducts
+).value
