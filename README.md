@@ -39,7 +39,7 @@ setting the value of `checkstyleOutputFile in Test`.
 
 To change the checkstyle configuration file set `checkstyleConfigLocation` in `build.sbt`:
 ```scala
-checkstyleConfigLocation := CheckstyleConfigLocation.File("checkstyle-config.xml")
+checkstyleConfigLocation := baseDirectory.value / "checkstyle-config.xml"
 ```
 
 You can also load remote configuration files by specifying a URL:
@@ -48,11 +48,13 @@ checkstyleConfigLocation :=
   CheckstyleConfigLocation.URL("https://raw.githubusercontent.com/checkstyle/checkstyle/master/config/checkstyle_checks.xml")
 ```
 
-Or load configuration files from the classpath by specifying a resource name:
+Or load configuration files from the classpath by specifying a resource name and an optional ClassPath:
 ```scala
+checkstyleConfigLocation := CheckstyleConfigLocation.Classpath("com/etsy/checkstyle-config.xml")
+// or
 checkstyleConfigLocation := CheckstyleConfigLocation.Classpath(
-"com/etsy/checkstyle-config.xml",
- (Compile / exportedProducts).value
+  "google_checks.xml", // google_checks.xml is in com.puppycrawl.tools:checkstyle:<version> jar file
+  (Compile / managedClasspath).value
 )
 ```
 
@@ -94,7 +96,7 @@ lazy val root = (project in file(".")).configs(IntegrationTest)
 
 Defaults.itSettings
 
-checkstyleConfigLocation := CheckstyleConfigLocation.File("my-checkstyle-config.xml"),
+checkstyleConfigLocation := baseDirectory.value / "my-checkstyle-config.xml",
 checkstyle in IntegrationTest := checkstyleTask(IntegrationTest).value,
 checkstyleOutputFile in IntegrationTest := target.value / "checkstyle-integration-test-report.xml"
 ```
@@ -108,7 +110,7 @@ SBT Checkstyle plugin comes with a default Checkstyle version: currently, Checks
 Provided the new Checkstyle version is compatible, you can override the version used at runtime in your `project/plugins.sbt`:
 
 ```scala
-dependencyOverrides += "com.puppycrawl.tools" % "checkstyle" % "6.15"
+dependencyOverrides += "com.puppycrawl.tools" % "checkstyle" % "8.29"
 ```
 
 ## Settings
@@ -120,8 +122,9 @@ dependencyOverrides += "com.puppycrawl.tools" % "checkstyle" % "6.15"
 
 ### `checkstyleConfigLocation`
 * *Description:* The location of the checkstyle configuration file.
-* *Accepts:* `CheckstyleConfigLocation.{File, URL, Classpath}`
-* *Default:* `CheckstyleConfigLocation.File("checkstyle-config.xml")`
+* *Accepts:* `File`, ex: `baseDirectory).value / "checkstyle-config.xml"`
+ or use one of CheckstyleConfigLocation's method: `URL(url: String)` | `Classpath(name: String, classpath: Classpath = (Compile / fullClasspath).value}`
+* *Default:* `checkstyle-config.xml` file in root project
 
 ### `checkstyleXsltTransformations`
 * *Description:* A set of XSLT transformations to be applied to the checkstyle output (optional).
@@ -147,13 +150,13 @@ scripted
 https://www.scala-sbt.org/1.x/docs/Bintray-For-Plugins.html
 
 ## changelogs
-#### 3.1.2
+#### 3.2.0
 + Change organization & name from `"com.etsy" % "sbt-checkstyle-plugin"` to `"com.sandinh" % "sbt-checkstyle"`
 + Update default version of checkstyle from 6.15 to 8.29
 + Drop support for sbt 0.13.x
-+ Fix CheckstyleConfigLocation.Classpath (break change):
-  - `checkstyleConfigLocation` is now a TaskKey, not SettingKey
-  - Must migrate `checkstyleConfigLocation := CheckstyleConfigLocation.Classpath(path/to/resource)` to
-    `checkstyleConfigLocation := CheckstyleConfigLocation.Classpath(path/to/resource, a-classpath)`.
-    For example, `a-classpath` can be `(Compile / exportedProducts).value`
++ `checkstyleConfigLocation` is now a `TaskKey[File]`, not `SettingKey[CheckstyleConfigLocation]`
+   (source backward compatible)
++ Fix CheckstyleConfigLocation.Classpath (`checkstyle-config-classpath` sbt-test failed)
++ Add `CheckstyleConfigLocation.Classpath(path/to/resource, a-classpath)`.
+  For example, `a-classpath` can be `(Compile / exportedProducts).value`
 + `sbt-checkstyle` is now published to bintray as in [this guide](https://www.scala-sbt.org/1.x/docs/Bintray-For-Plugins.html)

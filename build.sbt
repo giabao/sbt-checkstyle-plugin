@@ -9,7 +9,7 @@ lazy val root = (project in file("."))
   .enablePlugins(SbtPlugin)
   .settings(
     name := "sbt-checkstyle",
-    version := "3.1.2-SNAPSHOT",
+    version := "3.2.0-SNAPSHOT",
     Compile / doc / sources := Nil,
     Test / publishArtifact := false,
     scalaVersion := "2.12.10",
@@ -22,12 +22,15 @@ lazy val root = (project in file("."))
     scriptedBufferLog := false,
     libraryDependencies ++= Seq(
       "com.puppycrawl.tools"     % "checkstyle"   % "8.29",
+//      "com.puppycrawl.tools"     % "checkstyle"   % "8.29" exclude ("com.google.guava", "listenablefuture"),
+//      "com.google.guava"         % "listenablefuture" % "9999.0-empty-to-avoid-conflict-with-guava" jar(),
       "net.sf.saxon"             % "Saxon-HE"     % "9.9.1-6",
       "org.scalatest"            %% "scalatest"   % "3.1.0" % Test,
       "junit"                    % "junit"        % "4.12" % Test,
       "org.scalatestplus"        %% "junit-4-12"  % "3.1.0.0" % Test,
       "com.github.stefanbirkner" % "system-rules" % "1.19.0" % Test
     ),
+    transitiveClassifiers := Seq("sources"),
     scalastyleConfig := file("scalastyle.xml"),
     scalastyleFailOnError := true
   )

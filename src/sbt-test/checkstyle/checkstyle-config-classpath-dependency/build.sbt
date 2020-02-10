@@ -6,7 +6,4 @@ organization := "com.etsy"
 
 libraryDependencies += "com.puppycrawl.tools" % "checkstyle" % "6.13"
 
-checkstyleConfigLocation := CheckstyleConfigLocation.Classpath(
-  "google_checks.xml",
-  (Compile / exportedProducts).value
-)
+checkstyleConfigLocation := CheckstyleConfigLocation.Classpath("google_checks.xml")

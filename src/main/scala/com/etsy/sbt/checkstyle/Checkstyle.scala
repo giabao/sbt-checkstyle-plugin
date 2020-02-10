@@ -24,28 +24,25 @@ object Checkstyle {
     * @param xsltTransformations XSLT transformations to apply.
     * @param severityLevel The severity level used to fail the build.
     */
-  def checkstyle(javaSource: File, outputFile: File, configLocation: CheckstyleConfigLocation,
-                 xsltTransformations: Option[Set[CheckstyleXSLTSettings]], severityLevel: Option[CheckstyleSeverityLevel], streams: TaskStreams): Unit = {
+  def checkstyle(javaSource: File,
+                 outputFile: File,
+                 headerFile: File,
+                 configLocation: String,
+                 xsltTransformations: Option[Set[CheckstyleXSLTSettings]],
+                 severityLevel: Option[CheckstyleSeverityLevel],
+                 streams: TaskStreams): Unit = {
     val outputLocation = outputFile.absolutePath
-    val targetFolder = outputFile.getParentFile
-    val configFile = targetFolder + "/checkstyle-config.xml"
 
-    targetFolder.mkdirs()
-
-    val config = configLocation.read()
-    scala.xml.XML.save(configFile, config, "UTF-8", xmlDecl = true,
-      scala.xml.dtd.DocType(
-        "module",
-        scala.xml.dtd.PublicID(
-          "-//Puppy Crawl//DTD Check Configuration 1.3//EN",
-          "https://checkstyle.org/dtds/configuration_1_3.dtd"
-        ),
-        Nil
-      )
-    )
+    if (headerFile.getName != "") {
+      if (headerFile.exists()) {
+        sys.props("checkstyle.header.file") = headerFile.getAbsolutePath
+      } else {
+        streams.log.warn(s"checkstyleHeaderLocation file not found: $headerFile")
+      }
+    }
 
     val checkstyleArgs = Array(
-      "-c", configFile, // checkstyle configuration file
+      "-c", configLocation, // checkstyle configuration file
       javaSource.absolutePath, // location of Java source file
       "-f", "xml", // output format
       "-o", outputLocation // output file
