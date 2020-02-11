@@ -22,11 +22,7 @@ lazy val root = (project in file("."))
     scriptedBufferLog := false,
     libraryDependencies ++= Seq(
       "com.puppycrawl.tools"     % "checkstyle"   % "8.29",
-      "net.sf.saxon"             % "Saxon-HE"     % "9.9.1-6",
-      "org.scalatest"            %% "scalatest"   % "3.1.0" % Test,
-      "junit"                    % "junit"        % "4.12" % Test,
-      "org.scalatestplus"        %% "junit-4-12"  % "3.1.0.0" % Test,
-      "com.github.stefanbirkner" % "system-rules" % "1.19.0" % Test
+      "net.sf.saxon"             % "Saxon-HE"     % "9.9.1-6"
     ),
     transitiveClassifiers := Seq("sources"),
     scalastyleConfig := file("scalastyle.xml"),
