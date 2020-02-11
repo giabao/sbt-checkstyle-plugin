@@ -7,7 +7,7 @@ scala:
     - 2.12.10
 
 script:
-    - sbt ++$TRAVIS_SCALA_VERSION test scalastyle scripted
+    - sbt ++$TRAVIS_SCALA_VERSION scalastyle scripted
 
 before_cache:
     - rm -fv $HOME/.ivy2/.sbt.ivy.lock
