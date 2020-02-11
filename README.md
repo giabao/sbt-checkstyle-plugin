@@ -82,7 +82,7 @@ checkstyleXsltTransformations := {
 
 ### Failing the build
 
-You can control what severity of issues should break the build by setting the `checkstyleSeverityLevel` in your `build.sbt` as follows:
+You can control what severity of issues will be log as `[error]` by setting the `checkstyleSeverityLevel` in your `build.sbt` as follows:
 ```scala
 checkstyleSeverityLevel := Some(CheckstyleSeverityLevel.Error)
 ```
@@ -92,13 +92,13 @@ Possible values are defined by the `CheckstyleSeverityLevel` enumeration. The de
 ### Integration tests
 
 If you want to run Checkstyle on your integration tests add the following to your `build.sbt`:
-```scala
+```sbt
 lazy val root = (project in file(".")).configs(IntegrationTest)
 
 Defaults.itSettings
 
-checkstyleConfigLocation := baseDirectory.value / "my-checkstyle-config.xml",
-checkstyle in IntegrationTest := checkstyleTask(IntegrationTest).value,
+checkstyleConfigLocation := baseDirectory.value / "my-checkstyle-config.xml"
+checkstyle in IntegrationTest := checkstyleTask(IntegrationTest).value
 checkstyleOutputFile in IntegrationTest := target.value / "checkstyle-integration-test-report.xml"
 ```
 
@@ -106,12 +106,12 @@ You can then run the tasks `it:checkstyle` and `it:checkstyle-check`.
 
 ### Upgrading Checkstyle version
 
-SBT Checkstyle plugin comes with a default Checkstyle version: currently, Checkstyle 6.15 is used by default.
+SBT Checkstyle plugin comes with a default Checkstyle version: currently, Checkstyle 8.29 is used by default.
 
-Provided the new Checkstyle version is compatible, you can override the version used at runtime in your `project/plugins.sbt`:
+Provided the new Checkstyle version is compatible, you can override the version used at runtime in your `build.sbt`:
 
-```scala
-dependencyOverrides += "com.puppycrawl.tools" % "checkstyle" % "8.29"
+```sbt
+dependencyOverrides += "com.puppycrawl.tools" % "checkstyle" % "8.29" % CheckstyleLibs
 ```
 
 ## Settings
@@ -135,7 +135,7 @@ dependencyOverrides += "com.puppycrawl.tools" % "checkstyle" % "8.29"
 ### `checkstyleSeverityLevel`
 * *Description:* Decide how much effort to put into analysis.
 * *Accepts:* `Some(CheckstyleSeverityLevel.{Ignore, Info, Warning, Error})`
-* *Default:* `None`
+* *Default:* `Some(Error)`
 
 ## dev guide
 + clone
@@ -153,6 +153,7 @@ https://www.scala-sbt.org/1.x/docs/Bintray-For-Plugins.html
 ## changelogs
 #### 3.2.0
 + Change organization & name from `"com.etsy" % "sbt-checkstyle-plugin"` to `"com.sandinh" % "sbt-checkstyle"`
++ `sbt-checkstyle` is now published to bintray as in [this guide](https://www.scala-sbt.org/1.x/docs/Bintray-For-Plugins.html)
 + Update default version of checkstyle from 6.15 to 8.29
 + Drop support for sbt 0.13.x
 + break change: `checkstyleConfigLocation` is now a `TaskKey[File]`, not `SettingKey[CheckstyleConfigLocation]`
@@ -173,4 +174,7 @@ https://www.scala-sbt.org/1.x/docs/Bintray-For-Plugins.html
 + Fix CheckstyleConfigLocation.Classpath (`checkstyle-config-classpath` sbt-test failed)
 + Add `CheckstyleConfigLocation.Classpath(path/to/resource, a-classpath)`.
   For example, `a-classpath` can be `(Compile / exportedProducts).value`
-+ `sbt-checkstyle` is now published to bintray as in [this guide](https://www.scala-sbt.org/1.x/docs/Bintray-For-Plugins.html)
++ `checkstyle` task now return the num of issues has severity > `CheckstyleSeverityLevel.value`
++ `CheckstyleSeverityLevel` change default from `None` to `Some(Error)`
++ Don't call `sys.exit` when `checkstyle.value > 0`
++ Change the way to [Upgrading Checkstyle version](#upgrading-checkstyle-version)
