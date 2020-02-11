@@ -93,13 +93,9 @@ Possible values are defined by the `CheckstyleSeverityLevel` enumeration. The de
 
 If you want to run Checkstyle on your integration tests add the following to your `build.sbt`:
 ```sbt
-lazy val root = (project in file(".")).configs(IntegrationTest)
-
-Defaults.itSettings
-
-checkstyleConfigLocation := baseDirectory.value / "my-checkstyle-config.xml"
-checkstyle in IntegrationTest := checkstyleTask(IntegrationTest).value
-checkstyleOutputFile in IntegrationTest := target.value / "checkstyle-integration-test-report.xml"
+lazy val root = (project in file("."))
+  .configs(IntegrationTest)
+  .settings(Defaults.itSettings ++ checkstyleSettings(IntegrationTest): _*)
 ```
 
 You can then run the tasks `it:checkstyle` and `it:checkstyle-check`.
@@ -178,3 +174,5 @@ https://www.scala-sbt.org/1.x/docs/Bintray-For-Plugins.html
 + `CheckstyleSeverityLevel` change default from `None` to `Some(Error)`
 + Don't call `sys.exit` when `checkstyle.value > 0`
 + Change the way to [Upgrading Checkstyle version](#upgrading-checkstyle-version)
++ Add `autoImport.checkstyleSettings` for using with other configurations such as [Integration tests](#integration-tests)
++ Add `checkstyle / {fork, forkOptions, trapExit, checkstyleHeaderLocation, includeFilter, excludeFilter}` settings
