@@ -28,7 +28,7 @@ object CheckstylePlugin extends AutoPlugin {
 
     val CheckstyleLibs = config("CheckstyleLibs")
 
-    val checkstyle = TaskKey[Unit]("checkstyle", "Runs checkstyle")
+    val checkstyle = TaskKey[Int]("checkstyle", "Runs checkstyle, return num of issues has severity > CheckstyleSeverityLevel")
     val checkstyleOutputFile = SettingKey[File]("checkstyle-target", "The location of the generated checkstyle report")
     val checkstyleHeaderLocation = SettingKey[File](
       "checkstyle-header-location",
@@ -47,7 +47,7 @@ object CheckstylePlugin extends AutoPlugin {
       *
       * @param conf The configuration (Compile or Test) in which context to execute the checkstyle command
       */
-    def checkstyleTask(conf: Configuration): Initialize[Task[Unit]] = Def.task {
+    def checkstyleTask(conf: Configuration): Initialize[Task[Int]] = Def.task {
       val log = (conf / checkstyle / streams).value.log
 
       val headerFileOpt = {
@@ -87,7 +87,9 @@ object CheckstylePlugin extends AutoPlugin {
         Logger.Null
       )
 
-      if (outputFile.exists) {
+      if (! outputFile.exists) {
+        0
+      } else {
         (conf / checkstyleXsltTransformations).value.foreach { xslt =>
           Checkstyle.applyXSLT(outputFile, xslt)
         }
@@ -97,8 +99,10 @@ object CheckstylePlugin extends AutoPlugin {
         } match {
           case Some(issuesFound) if issuesFound > 0 =>
             log.error(s"$issuesFound issue(s) found in Checkstyle report: $outputFile")
+            issuesFound
           case _ =>
             log.info(s"Checkstyle success")
+            0
         }
       }
     }
