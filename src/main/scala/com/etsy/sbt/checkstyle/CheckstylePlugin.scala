@@ -37,6 +37,7 @@ object CheckstylePlugin extends AutoPlugin {
       "The header file. Similar to https://maven.apache.org/plugins/maven-checkstyle-plugin/check-mojo.html#headerLocation"
     )
     val checkstyleProperties = taskKey[Map[String, String]]("Properties correspond to `-p` param of checkstyle cli")
+    val checkstyleRunOpts = taskKey[Seq[String]]("options to pass to checkstyle cli")
     val checkstyleConfigLocation = taskKey[File]("The checkstyle XML configuration file")
     val checkstyleXsltTransformations = SettingKey[Option[Set[CheckstyleXSLTSettings]]](
       "checkstyleXsltTransformations",
@@ -52,57 +53,46 @@ object CheckstylePlugin extends AutoPlugin {
     val CheckstyleXSLTSettings   = com.etsy.sbt.checkstyle.CheckstyleXSLTSettings
 
     /** Runs checkstyle
-      * @param conf The configuration (Compile or Test) in which context to execute the checkstyle command
+      * @param c The configuration (Compile or Test) in which context to execute the checkstyle command
       * @see [[https://www.scala-sbt.org/1.x/docs/Tasks.html#Dynamic+Computations+with Dynamic Computations with Def.taskDyn]] */
-    def checkstyleTask(conf: Configuration): Initialize[Task[Int]] = Def.taskDyn {
-      val sourceFiles = (conf / checkstyle / sources).value
+    def checkstyleTask(c: Configuration): Initialize[Task[Int]] = Def.taskDyn {
+      val sourceFiles = (c / checkstyle / sources).value
       if (sourceFiles.isEmpty) {
         Def.task { 0 }
       } else {
-        val r: ScalaRun = (checkstyle / runner).value
-        val outputFile = (conf / checkstyleOutputFile).value
-        val configFile = (conf / checkstyleConfigLocation).value
-        val classpath = (CheckstyleLibs / managedClasspath).value.files
-
-        val checkstyleOpts = Seq(
-          // format: off
-          "-c", configFile.getAbsolutePath, // checkstyle configuration file
-          "-f", "xml", // output format
-          "-o", outputFile.absolutePath // output file
-          // format: on
-        ) ++ sourceFiles.map(_.absolutePath)
-        r.run(
-          "com.puppycrawl.tools.checkstyle.Main",
-          classpath,
-          checkstyleOpts,
-          Logger.Null
+        Def.sequential(
+          checkstyleRunTask(c),
+          checkstylePostProcessTask(c)
         )
-        checkstylePostProcessTask(conf)
       }
     }
 
+    private def checkstyleRunTask(c: Configuration) = Def.task {
+      val r: ScalaRun = (checkstyle / runner).value
+      val classpath = (CheckstyleLibs / managedClasspath).value.files
+      val runOpts = (c / checkstyleRunOpts).value
+      r.run("com.puppycrawl.tools.checkstyle.Main", classpath, runOpts, Logger.Null)
+    }
+
     /** xslt transform & count issues */
-    private def checkstylePostProcessTask(conf: Configuration) = Def.task {
-      val outputFile = (conf / checkstyleOutputFile).value
+    private def checkstylePostProcessTask(c: Configuration) = Def.task {
+      val outputFile = (c / checkstyleOutputFile).value
+      val transformerOpt = (c / checkstyleXsltTransformations).value
+      val severityOpt = (c / checkstyleSeverityLevel).value
+
       val log = (checkstyle / streams).value.log
+      val logPrefix = s"${name.value} / checkstyle"
 
       if (!outputFile.exists) {
         0
       } else {
-        (conf / checkstyleXsltTransformations).value.foreach { xslt =>
-          Checkstyle.applyXSLT(outputFile, xslt)
-        }
-
-        (conf / checkstyleSeverityLevel).value.map { severityLevel =>
-          Checkstyle.processIssues(log, outputFile, severityLevel)
-        } match {
+        transformerOpt.foreach { Checkstyle.applyXSLT(outputFile, _) }
+        severityOpt.map { Checkstyle.processIssues(log, outputFile, _) } match {
           case Some(issuesFound) if issuesFound > 0 =>
-            log.error(
-              s"${name.value} / checkstyle: $issuesFound issue(s) found in Checkstyle report: $outputFile"
-            )
+            log.error(s"$logPrefix: $issuesFound issue(s) found in Checkstyle report: $outputFile")
             issuesFound
           case _ =>
-            log.info(s"${name.value} / checkstyle success")
+            log.info(s"$logPrefix success")
             0
         }
       }
@@ -111,6 +101,7 @@ object CheckstylePlugin extends AutoPlugin {
     def checkstyleSettings(c: Configuration): Seq[Setting[_]] = Seq(
       c / checkstyleOutputFile := target.value / s"checkstyle-${c.name}-report.xml",
       c / checkstyle / sources := sourcesTask(c).value,
+      c / checkstyleRunOpts := runOptsTask(c).value,
       c / checkstyle := checkstyleTask(c).value
     )
   }
@@ -132,6 +123,19 @@ object CheckstylePlugin extends AutoPlugin {
     (c / unmanagedSourceDirectories).value.flatMap { d =>
       PathFinder(d).globRecursive(filter).get()
     }
+  }
+  /** arguments pass to run [[com.puppycrawl.tools.checkstyle.Main.main]] */
+  private def runOptsTask(c: Configuration) = Def.task {
+    val sourceFiles = (c / checkstyle / sources).value
+    val configFile = (c / checkstyleConfigLocation).value
+    val outputFile = (c / checkstyleOutputFile).value
+    Seq(
+      // format: off
+      "-c", configFile.getAbsolutePath, // checkstyle configuration file
+      "-f", "xml", // output format
+      "-o", outputFile.absolutePath // output file
+      // format: on
+    ) ++ sourceFiles.map(_.absolutePath)
   }
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
@@ -171,9 +175,10 @@ object CheckstylePlugin extends AutoPlugin {
     checkstyleConfigLocation := (ThisBuild / baseDirectory).value / "checkstyle-config.xml",
     checkstyle / includeFilter := "*.java",
     checkstyle / excludeFilter := HiddenFileFilter,
-    // default settings for ScopeAxis's configuration = Zero
+    // default settings for ScopeAxis's configuration = Zero - see [[checkstyleSettings]]
     checkstyleOutputFile := target.value / "checkstyle-report.xml",
     checkstyle / sources := sourcesTask(Compile).value,
+    checkstyleRunOpts := runOptsTask(Compile).value,
     checkstyle := checkstyleTask(Compile).value
   ) ++ checkstyleSettings(Test)
 }

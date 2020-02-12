@@ -139,6 +139,10 @@ Similar to maven-checkstyle-plugin's [headerLocation param](https://maven.apache
 ### `checkstyleProperties`
 Properties correspond to `-p` param of [checkstyle cli](https://checkstyle.sourceforge.io/cmdline.html#Command_line_usage)
 
+### `checkstyleRunOpts`
+` = taskKey[Seq[String]]("options to pass to checkstyle cli")`
+Usage example: `checkstyleRunOpts += "--debug"`
+
 ### `checkstyle / {fork, forkOptions, trapExit, runner}`
 To control how to run upstream checkstyle cli
 
@@ -188,7 +192,6 @@ https://www.scala-sbt.org/1.x/docs/Bintray-For-Plugins.html
 + Change the way to [Upgrading Checkstyle version](#upgrading-checkstyle-version)
 + Add `autoImport.checkstyleSettings` for using with other configurations such as [Integration tests](#integration-tests)
 + Add settings:
- - `checkstyleHeaderFile`
- - `checkstyleProperties`
+ - `checkstyleHeaderFile, checkstyleProperties, checkstyleRunOpts`
  - `checkstyle / {fork, forkOptions, trapExit, runner}`
  - `checkstyle / {includeFilter, excludeFilter, sources}`
