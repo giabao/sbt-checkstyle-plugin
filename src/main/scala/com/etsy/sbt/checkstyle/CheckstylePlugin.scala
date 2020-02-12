@@ -29,23 +29,21 @@ object CheckstylePlugin extends AutoPlugin {
 
     val CheckstyleLibs = config("CheckstyleLibs")
 
-    val checkstyle = TaskKey[Int](
-      "checkstyle",
-      "Runs checkstyle, return num of issues has severity > CheckstyleSeverityLevel"
-    )
+    val checkstyle = taskKey[Int]("Runs checkstyle, return output file")
     val checkstyleOutputFile =
-      SettingKey[File]("checkstyle-target", "The location of the generated checkstyle report")
-    val checkstyleHeaderLocation = SettingKey[File](
-      "checkstyle-header-location",
+      SettingKey[File]("checkstyleOutputFile", "The location of the generated checkstyle report")
+    val checkstyleHeaderFile = SettingKey[File](
+      "checkstyleHeaderLocation",
       "The location of the header file. Similar to https://maven.apache.org/plugins/maven-checkstyle-plugin/check-mojo.html#headerLocation"
     )
+    val checkstyleProperties = taskKey[Map[String, String]]("Properties correspond to `-p` param of checkstyle cli")
     val checkstyleConfigLocation = taskKey[File]("The checkstyle XML configuration file")
     val checkstyleXsltTransformations = SettingKey[Option[Set[CheckstyleXSLTSettings]]](
-      "xslt-transformations",
+      "checkstyleXsltTransformations",
       "An optional set of XSLT transformations to be applied to the checkstyle output"
     )
     val checkstyleSeverityLevel = SettingKey[Option[CheckstyleSeverityLevel]](
-      "checkstyle-severity-level",
+      "checkstyleSeverityLevel",
       "Sets the severity levels which should fail the build"
     )
 
@@ -55,16 +53,62 @@ object CheckstylePlugin extends AutoPlugin {
 
     /** Runs checkstyle
       * @param conf The configuration (Compile or Test) in which context to execute the checkstyle command */
-    def checkstyleTask(conf: Configuration): Initialize[Task[Int]] = Def.taskDyn {
+    def checkstyleTask(conf: Configuration): Initialize[Task[Int]] = Def.task {
       val sourceFiles = (conf / checkstyle / sources).value
-      if (sourceFiles.isEmpty) Def.task { 0 } else checkstyleTaskImpl(conf, sourceFiles)
+      val r: ScalaRun = (checkstyle / runner).value
+      val outputFile = (conf / checkstyleOutputFile).value
+      val configFile = (conf / checkstyleConfigLocation).value
+      val classpath = (CheckstyleLibs / managedClasspath).value.files
+
+      if (sourceFiles.nonEmpty) {
+        val checkstyleOpts = Seq(
+          // format: off
+          "-c", configFile.getAbsolutePath, // checkstyle configuration file
+          "-f", "xml", // output format
+          "-o", outputFile.absolutePath // output file
+          // format: on
+        ) ++ sourceFiles.map(_.absolutePath)
+        r.run(
+          "com.puppycrawl.tools.checkstyle.Main",
+          classpath,
+          checkstyleOpts,
+          Logger.Null
+        )
+      }
+      checkstylePostProcessTask(conf).value
+    }
+
+    /** xslt transform & count issues */
+    private def checkstylePostProcessTask(conf: Configuration) = Def.task {
+      val outputFile = (conf / checkstyleOutputFile).value
+      val log = (checkstyle / streams).value.log
+
+      if (!outputFile.exists) {
+        0
+      } else {
+        (conf / checkstyleXsltTransformations).value.foreach { xslt =>
+          Checkstyle.applyXSLT(outputFile, xslt)
+        }
+
+        (conf / checkstyleSeverityLevel).value.map { severityLevel =>
+          Checkstyle.processIssues(log, outputFile, severityLevel)
+        } match {
+          case Some(issuesFound) if issuesFound > 0 =>
+            log.error(
+              s"${name.value} / checkstyle: $issuesFound issue(s) found in Checkstyle report: $outputFile"
+            )
+            issuesFound
+          case _ =>
+            log.info(s"${name.value} / checkstyle success")
+            0
+        }
+      }
     }
 
     def checkstyleSettings(c: Configuration): Seq[Setting[_]] = Seq(
       c / checkstyleOutputFile := target.value / s"checkstyle-${c.name}-report.xml",
-      // see sbt.Defaults.sourceConfigPaths
-      sourcesSetting(c),
-      checkstyle := checkstyleTask(c).value
+      c / checkstyle / sources := sourcesTask(c).value,
+      c / checkstyle := checkstyleTask(c).value,
     )
   }
 
@@ -74,78 +118,11 @@ object CheckstylePlugin extends AutoPlugin {
 
   override def projectConfigurations: Seq[Configuration] = Seq(CheckstyleLibs)
 
-  // scalastyle:off method.length
-  private def checkstyleTaskImpl(
-      conf: Configuration,
-      sourceFiles: Seq[File]
-  ): Initialize[Task[Int]] = Def.task {
-    val log = (checkstyle / streams).value.log
-
-    val headerFileOpt = {
-      val f = checkstyleHeaderLocation.value
-      if (f.getName.isEmpty) {
-        None
-      } else if (f.exists()) {
-        Some("checkstyle.header.file" -> f.getAbsolutePath)
-      } else {
-        log.warn(s"checkstyleHeaderLocation file not found: $f")
-        None
-      }
-    }
-
-    val forkOpts = (checkstyle / forkOptions).value
-    val trap     = (checkstyle / trapExit).value
-    val r: ScalaRun = if ((checkstyle / fork).value) {
-      val newJVMOpts = forkOpts.runJVMOptions ++ headerFileOpt.map { case (k, v) => s"-D$k=$v" }
-      new ForkRun(forkOpts.withRunJVMOptions(newJVMOpts))
-    } else {
-      headerFileOpt foreach { case (k, v) => sys.props(k) = v }
-      new Run(clsLoader, trap)
-    }
-
-    val outputFile = (conf / checkstyleOutputFile).value
-    val checkstyleOpts = Seq(
-      // format: off
-      "-c", (conf / checkstyleConfigLocation).value.getAbsolutePath, // checkstyle configuration file
-      "-f", "xml", // output format
-      "-o", outputFile.absolutePath // output file
-      // format: on
-    ) ++ sourceFiles.map(_.absolutePath)
-
-    r.run(
-      "com.puppycrawl.tools.checkstyle.Main",
-      (CheckstyleLibs / managedClasspath).value.files,
-      checkstyleOpts,
-      Logger.Null
-    )
-
-    if (!outputFile.exists) {
-      0
-    } else {
-      (conf / checkstyleXsltTransformations).value.foreach { xslt =>
-        Checkstyle.applyXSLT(outputFile, xslt)
-      }
-
-      (conf / checkstyleSeverityLevel).value.map { severityLevel =>
-        Checkstyle.processIssues(log, outputFile, severityLevel)
-      } match {
-        case Some(issuesFound) if issuesFound > 0 =>
-          log.error(
-            s"${name.value} / checkstyle: $issuesFound issue(s) found in Checkstyle report: $outputFile"
-          )
-          issuesFound
-        case _ =>
-          log.info(s"${name.value} / checkstyle success")
-          0
-      }
-    }
-  }
-  // scalastyle:on method.length
-
   private[this] def clsLoader(paths: Seq[File]) =
     new URLClassLoader(Path.toURLs(paths), ClassLoader.getSystemClassLoader)
 
-  private def sourcesSetting(c: Configuration) = c / checkstyle / sources := {
+  /** @ee [[sbt.Defaults.sourceConfigPaths]] */
+  private def sourcesTask(c: Configuration) = Def.task {
     val include = (c / checkstyle / includeFilter).value
     val exclude = (c / checkstyle / excludeFilter).value
     val filter  = include -- exclude
@@ -160,16 +137,38 @@ object CheckstylePlugin extends AutoPlugin {
     libraryDependencies += "com.puppycrawl.tools" % "checkstyle" % "8.29" % CheckstyleLibs,
     CheckstyleLibs / managedClasspath := Classpaths
       .managedJars(CheckstyleLibs, classpathTypes.value, update.value),
-    checkstyle / fork := false,
+    checkstyle / fork := true,
+    checkstyleProperties := {
+      val log = streams.value.log
+      val f = checkstyleHeaderFile.value
+      if (f.name.isEmpty) Map.empty
+      else if (f.exists) Map("checkstyle.header.file" -> f.getAbsolutePath)
+      else {
+        log.warn(s"checkstyleHeaderLocation file not found: $f")
+        Map.empty
+      }
+    },
     checkstyle / forkOptions := (Compile / forkOptions).value,
+    checkstyle / runner := {
+      val props = checkstyleProperties.value
+      val trap = (checkstyle / trapExit).value
+      val forkOpts = (checkstyle / forkOptions).value
+      if ((checkstyle / fork).value) {
+        val jvmOpts = forkOpts.runJVMOptions ++ props.map { case (k, v) => s"-D$k=$v" }
+        new ForkRun(forkOpts.withRunJVMOptions(jvmOpts))
+      } else {
+        props.foreach { case (k, v) => sys.props(k) = v }
+        new Run(clsLoader, trap)
+      }
+    },
     checkstyle / trapExit := true,
-    checkstyleHeaderLocation := file(""), // default `file("")` means checkstyleHeaderLocation will not be used
+    checkstyleHeaderFile := file(""), // default `file("")` means checkstyleHeaderFile will not be used
     checkstyleConfigLocation := (ThisBuild / baseDirectory).value / "checkstyle-config.xml",
     checkstyle / includeFilter := "*.java",
     checkstyle / excludeFilter := HiddenFileFilter,
     // default settings for ScopeAxis's configuration = Zero
     checkstyleOutputFile := target.value / "checkstyle-report.xml",
-    sourcesSetting(Compile),
+    checkstyle / sources := sourcesTask(Compile).value,
     checkstyle := checkstyleTask(Compile).value
   ) ++ checkstyleSettings(Test)
 }
