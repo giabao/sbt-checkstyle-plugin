@@ -108,7 +108,7 @@ object CheckstylePlugin extends AutoPlugin {
     def checkstyleSettings(c: Configuration): Seq[Setting[_]] = Seq(
       c / checkstyleOutputFile := target.value / s"checkstyle-${c.name}-report.xml",
       c / checkstyle / sources := sourcesTask(c).value,
-      c / checkstyle := checkstyleTask(c).value,
+      c / checkstyle := checkstyleTask(c).value
     )
   }
 
@@ -141,9 +141,11 @@ object CheckstylePlugin extends AutoPlugin {
     checkstyleProperties := {
       val log = streams.value.log
       val f = checkstyleHeaderFile.value
-      if (f.name.isEmpty) Map.empty
-      else if (f.exists) Map("checkstyle.header.file" -> f.getAbsolutePath)
-      else {
+      if (f.name.isEmpty) {
+        Map.empty
+      } else if (f.exists) {
+        Map("checkstyle.header.file" -> f.getAbsolutePath)
+      } else {
         log.warn(s"checkstyleHeaderLocation file not found: $f")
         Map.empty
       }
