@@ -191,6 +191,27 @@ https://www.scala-sbt.org/1.x/docs/Bintray-For-Plugins.html
 + Don't call `sys.exit` when `checkstyle.value > 0`
 + Change the way to [Upgrading Checkstyle version](#upgrading-checkstyle-version)
 + Add `autoImport.checkstyleSettings` for using with other configurations such as [Integration tests](#integration-tests)
+  
+  Migrate:
+  ```sbt
+  lazy val root = (project in file(".")).configs(IntegrationTest)
+  Defaults.itSettings
+  
+  checkstyleConfigLocation := baseDirectory.value / "my-checkstyle-config.xml"
+  checkstyle in IntegrationTest := checkstyleTask(IntegrationTest).value
+  checkstyleOutputFile in IntegrationTest := target.value / "checkstyle-integration-test-report.xml"
+  ```
+  =>
+  ```sbt
+  lazy val root = (project in file("."))
+    .configs(IntegrationTest)
+    .settings(Defaults.itSettings ++ checkstyleSettings(IntegrationTest): _*)
+  
+  // custom checkstyleConfigLocation & checkstyleOutputFile (optional)
+  checkstyleConfigLocation := baseDirectory.value / "my-checkstyle-config.xml"
+  checkstyleOutputFile in IntegrationTest := target.value / "checkstyle-integration-test-report.xml"
+  ```
+  
 + Add settings:
  - `checkstyleHeaderFile, checkstyleProperties, checkstyleRunOpts`
  - `checkstyle / {fork, forkOptions, trapExit, runner}`

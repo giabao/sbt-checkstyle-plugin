@@ -4,10 +4,11 @@ name := "checkstyle-integration-test"
 
 organization := "com.etsy"
 
-lazy val root = (project in file(".")).configs(IntegrationTest)
+lazy val root = (project in file("."))
+  .configs(IntegrationTest)
+  .settings(Defaults.itSettings ++ checkstyleSettings(IntegrationTest): _*)
 
-Defaults.itSettings
-
+// custom checkstyleConfigLocation & checkstyleOutputFile (optional)
 checkstyleConfigLocation := baseDirectory.value / "my-checkstyle-config.xml"
-checkstyle in IntegrationTest := checkstyleTask(IntegrationTest).value
+// default is "checkstyle-it-report.xml"
 checkstyleOutputFile in IntegrationTest := target.value / "checkstyle-integration-test-report.xml"
