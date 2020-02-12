@@ -52,15 +52,18 @@ object CheckstylePlugin extends AutoPlugin {
     val CheckstyleXSLTSettings   = com.etsy.sbt.checkstyle.CheckstyleXSLTSettings
 
     /** Runs checkstyle
-      * @param conf The configuration (Compile or Test) in which context to execute the checkstyle command */
-    def checkstyleTask(conf: Configuration): Initialize[Task[Int]] = Def.task {
+      * @param conf The configuration (Compile or Test) in which context to execute the checkstyle command
+      * @see [[https://www.scala-sbt.org/1.x/docs/Tasks.html#Dynamic+Computations+with Dynamic Computations with Def.taskDyn]] */
+    def checkstyleTask(conf: Configuration): Initialize[Task[Int]] = Def.taskDyn {
       val sourceFiles = (conf / checkstyle / sources).value
-      val r: ScalaRun = (checkstyle / runner).value
-      val outputFile = (conf / checkstyleOutputFile).value
-      val configFile = (conf / checkstyleConfigLocation).value
-      val classpath = (CheckstyleLibs / managedClasspath).value.files
+      if (sourceFiles.isEmpty) {
+        Def.task { 0 }
+      } else {
+        val r: ScalaRun = (checkstyle / runner).value
+        val outputFile = (conf / checkstyleOutputFile).value
+        val configFile = (conf / checkstyleConfigLocation).value
+        val classpath = (CheckstyleLibs / managedClasspath).value.files
 
-      if (sourceFiles.nonEmpty) {
         val checkstyleOpts = Seq(
           // format: off
           "-c", configFile.getAbsolutePath, // checkstyle configuration file
@@ -74,8 +77,8 @@ object CheckstylePlugin extends AutoPlugin {
           checkstyleOpts,
           Logger.Null
         )
+        checkstylePostProcessTask(conf)
       }
-      checkstylePostProcessTask(conf).value
     }
 
     /** xslt transform & count issues */
@@ -121,7 +124,7 @@ object CheckstylePlugin extends AutoPlugin {
   private[this] def clsLoader(paths: Seq[File]) =
     new URLClassLoader(Path.toURLs(paths), ClassLoader.getSystemClassLoader)
 
-  /** @ee [[sbt.Defaults.sourceConfigPaths]] */
+  /** @see [[sbt.Defaults.sourceConfigPaths]] */
   private def sourcesTask(c: Configuration) = Def.task {
     val include = (c / checkstyle / includeFilter).value
     val exclude = (c / checkstyle / excludeFilter).value
