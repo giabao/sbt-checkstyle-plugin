@@ -133,6 +133,18 @@ dependencyOverrides += "com.puppycrawl.tools" % "checkstyle" % "8.29" % Checksty
 * *Accepts:* `Some(CheckstyleSeverityLevel.{Ignore, Info, Warning, Error})`
 * *Default:* `Some(Error)`
 
+### `checkstyleHeaderFile`
+Similar to maven-checkstyle-plugin's [headerLocation param](https://maven.apache.org/plugins/maven-checkstyle-plugin/check-mojo.html#headerLocation)
+
+### `checkstyleProperties`
+Properties correspond to `-p` param of [checkstyle cli](https://checkstyle.sourceforge.io/cmdline.html#Command_line_usage)
+
+### `checkstyle / {fork, forkOptions, trapExit, runner}`
+To control how to run upstream checkstyle cli
+
+### `checkstyle / {includeFilter, excludeFilter, sources}`
+To control source files in checkstyle task
+
 ## dev guide
 + clone
 + using IntelliJ
@@ -175,4 +187,8 @@ https://www.scala-sbt.org/1.x/docs/Bintray-For-Plugins.html
 + Don't call `sys.exit` when `checkstyle.value > 0`
 + Change the way to [Upgrading Checkstyle version](#upgrading-checkstyle-version)
 + Add `autoImport.checkstyleSettings` for using with other configurations such as [Integration tests](#integration-tests)
-+ Add `checkstyle / {fork, forkOptions, trapExit, checkstyleHeaderLocation, includeFilter, excludeFilter}` settings
++ Add settings:
+ - `checkstyleHeaderFile`
+ - `checkstyleProperties`
+ - `checkstyle / {fork, forkOptions, trapExit, runner}`
+ - `checkstyle / {includeFilter, excludeFilter, sources}`

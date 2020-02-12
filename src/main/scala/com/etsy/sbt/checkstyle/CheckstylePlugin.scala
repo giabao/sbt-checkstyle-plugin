@@ -33,8 +33,8 @@ object CheckstylePlugin extends AutoPlugin {
     val checkstyleOutputFile =
       SettingKey[File]("checkstyleOutputFile", "The location of the generated checkstyle report")
     val checkstyleHeaderFile = SettingKey[File](
-      "checkstyleHeaderLocation",
-      "The location of the header file. Similar to https://maven.apache.org/plugins/maven-checkstyle-plugin/check-mojo.html#headerLocation"
+      "checkstyleHeaderFile",
+      "The header file. Similar to https://maven.apache.org/plugins/maven-checkstyle-plugin/check-mojo.html#headerLocation"
     )
     val checkstyleProperties = taskKey[Map[String, String]]("Properties correspond to `-p` param of checkstyle cli")
     val checkstyleConfigLocation = taskKey[File]("The checkstyle XML configuration file")
@@ -149,7 +149,7 @@ object CheckstylePlugin extends AutoPlugin {
       } else if (f.exists) {
         Map("checkstyle.header.file" -> f.getAbsolutePath)
       } else {
-        log.warn(s"checkstyleHeaderLocation file not found: $f")
+        log.warn(s"checkstyleHeaderFile not found: $f")
         Map.empty
       }
     },
