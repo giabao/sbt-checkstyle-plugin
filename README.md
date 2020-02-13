@@ -187,7 +187,13 @@ https://www.scala-sbt.org/1.x/docs/Bintray-For-Plugins.html
 + Fix CheckstyleConfigLocation.Classpath (`checkstyle-config-classpath` sbt-test failed)
 + Add `CheckstyleConfigLocation.Classpath(path/to/resource, a-classpath)`.
   For example, `a-classpath` can be `(Compile / exportedProducts).value`
-+ Call `sys.error` instead of `sys.exit` when `checkstyleSeverityLevel.isDefined` && checkstyle found issues has `severity > checkstyleSeverityLevel`
++ Don't exit JVM:
+  - Call `sys.error` instead of `sys.exit` when `checkstyleSeverityLevel.isDefined` && checkstyle found issues has `severity > checkstyleSeverityLevel`
+  - Use `sbt.TrapExit` with `checkstyle / trapExit := true` (or set `checkstyle / fork := true` to fork a new JVM)
+    instead of implementing `NoExitSecurityManager`.
+    
+    Note: `sbt-checkstyle` < 3.2.0 still exit VM on multi-project builds.
+    [This sbt's commit](https://github.com/sbt/sbt/commit/60426fac) fix a similar issue in sbt itself.
 + Change the way to [Upgrading Checkstyle version](#upgrading-checkstyle-version)
 + Add `autoImport.checkstyleSettings` for using with other configurations such as [Integration tests](#integration-tests)
   
