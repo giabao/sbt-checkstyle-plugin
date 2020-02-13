@@ -72,26 +72,30 @@ object CheckstylePlugin extends AutoPlugin {
       val r: ScalaRun = (checkstyle / runner).value
       val classpath = (CheckstyleLibs / managedClasspath).value.files
       val runOpts = (c / checkstyleRunOpts).value
-      r.run("com.puppycrawl.tools.checkstyle.Main", classpath, runOpts, Logger.Null) match {
-        case Success(_) => // continue
-        case Failure(e) => log.error(e.getMessage)
-      }
+      r.run("com.puppycrawl.tools.checkstyle.Main", classpath, runOpts, Logger.Null)
 
       // checkstylePostProcessTask: xslt transform & count issues
       val outputFile = (c / checkstyleOutputFile).value
       val transformerOpt = (c / checkstyleXsltTransformations).value
       val severityOpt = (c / checkstyleSeverityLevel).value
 
+      // for logging purpose only
+      val baseDir = baseDirectory.value
+      val isRoot = baseDir == (ThisBuild / baseDirectory).value
+      val id = name.value
+      val logPrefix = if (isRoot) "checkstyle" else s"$id / checkstyle"
+      def rel(f: File) = f.relativeTo(baseDir).getOrElse(f)
+
       if (outputFile.exists) {
         transformerOpt.foreach { Checkstyle.applyXSLT(outputFile, _) }
-        severityOpt.map { Checkstyle.processIssues(log, outputFile, _) } match {
+        severityOpt.map { Checkstyle.processIssues(log, logPrefix, baseDir, outputFile, _) } match {
           case None =>
-            log.info("checkstyle done")
+            log.info(s"$logPrefix done. See report at ${rel(outputFile)} or set `checkstyleSeverityLevel := Some(Error)` to see errors in console")
           case Some(0) =>
-            log.info(s"checkstyle success (on SeverityLevel ${severityOpt.get})")
+            log.info(s"$logPrefix success. No issues has SeverityLevel >= '${severityOpt.get}'")
           case Some(issuesFound) =>
             // fail the build
-            sys.error(s"checkstyle: $issuesFound issue(s) found in Checkstyle report $outputFile")
+            sys.error(s"$logPrefix: $issuesFound issue(s) found in Checkstyle report ${rel(outputFile)}")
         }
       }
     }

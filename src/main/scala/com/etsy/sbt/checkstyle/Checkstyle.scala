@@ -23,7 +23,9 @@ object Checkstyle {
     * @param severityLevel The severity level at which to fail the build if style issues exist at that level
     * @return A count of the total number of issues processed
     */
-  def processIssues(log: Logger, outputFile: File, severityLevel: CheckstyleSeverityLevel): Int = {
+  def processIssues(log: Logger, logPrefix: String, baseDir: File, outputFile: File, severityLevel: CheckstyleSeverityLevel): Int = {
+    def rel(f: String) = file(f).relativeTo(baseDir).map(_.getPath).getOrElse(f)
+
     val report = XML.loadFile(outputFile)
     (report \ "file").flatMap { file =>
       (file \ "error").map { error =>
@@ -34,7 +36,7 @@ object Checkstyle {
           val lineNumber = error \@ "line"
           val filename = file \@ "name"
           val errorMessage = error \@ "message"
-          log.error(s"Checkstyle $severity found in $filename:$lineNumber: $errorMessage")
+          log.error(s"$logPrefix: $severity found in ${rel(filename)}:$lineNumber: $errorMessage")
           1
         }
       }
