@@ -12,12 +12,12 @@ This is a fork of the sbt-code-quality project found
 ## Setup
 
 Add the following lines to `project/plugins.sbt`:
-
-```scala
-addSbtPlugin("com.sandinh" % "sbt-checkstyle" % "3.1.2")
+```sbt
+addSbtPlugin("com.sandinh" % "sbt-checkstyle" % "3.2.0")
 ```
+`sbt-checkstyle` is an AutoPlugin, so there is no need to modify the `build.sbt` file to enable it.
 
-sbt-checkstyle is an AutoPlugin, so there is no need to modify the `build.sbt` file to enable it.
+If you still use sbt 0.13.x, please use `"com.etsy" % "sbt-checkstyle" % "3.1.2")`
 
 ## Usage
 
@@ -155,7 +155,6 @@ To control source files in checkstyle task
 + Set IntelliJ using scalafmt code formatter
 + sbt
 ```sbtshell
-test
 scalastyle
 scripted
 ```
@@ -166,6 +165,8 @@ https://www.scala-sbt.org/1.x/docs/Bintray-For-Plugins.html
 #### 3.2.0
 + Change organization & name from `"com.etsy" % "sbt-checkstyle-plugin"` to `"com.sandinh" % "sbt-checkstyle"`
 + `sbt-checkstyle` is now published to bintray as in [this guide](https://www.scala-sbt.org/1.x/docs/Bintray-For-Plugins.html)
+  
+  By publishing to bintray, Intellij now can download `sbt sources` of `sbt-checkstyle-plugin`
 + Update default version of checkstyle from 6.15 to 8.29
 + Drop support for sbt 0.13.x
 + break change: `checkstyleConfigLocation` is now a `TaskKey[File]`, not `SettingKey[CheckstyleConfigLocation]`
