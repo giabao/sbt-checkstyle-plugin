@@ -16,8 +16,7 @@ lazy val root = (project in file("."))
     pluginCrossBuild / sbtVersion := "1.3.8",
     scriptedLaunchOpts ++= Seq(
       "-Xmx1024M",
-      "-Dplugin.version=" + version.value,
-      "-Dplugin.org=" + organization.value
+      s"-Dplugin.version=${organization.value}:${name.value}:${version.value}"
     ),
     scriptedBufferLog := false,
     libraryDependencies ++= Seq(
