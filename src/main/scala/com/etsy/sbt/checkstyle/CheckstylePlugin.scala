@@ -163,7 +163,7 @@ object CheckstylePlugin extends AutoPlugin {
     libraryDependencies += "com.puppycrawl.tools" % "checkstyle" % "8.29" % CheckstyleLibs,
     CheckstyleLibs / managedClasspath := Classpaths
       .managedJars(CheckstyleLibs, classpathTypes.value, update.value),
-    checkstyle / fork := true,
+    checkstyle / fork := false,
     checkstyleProperties := {
       val f = checkstyleHeaderFile.value
       if (f.name.isEmpty) {
