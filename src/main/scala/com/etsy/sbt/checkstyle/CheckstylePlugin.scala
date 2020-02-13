@@ -9,6 +9,8 @@ import sbt.io.{Path, PathFinder}
 import sbt.util.NoJsonWriter
 import sbt.{Def, HiddenFileFilter, _}
 
+import scala.util.{Failure, Success}
+
 /**
   * An SBT plugin to run checkstyle over Java code
   *
@@ -29,7 +31,7 @@ object CheckstylePlugin extends AutoPlugin {
 
     val CheckstyleLibs = config("CheckstyleLibs")
 
-    val checkstyle = taskKey[Int]("Runs checkstyle, return output file")
+    val checkstyle = taskKey[Unit]("Runs checkstyle")
     val checkstyleOutputFile =
       SettingKey[File]("checkstyleOutputFile", "The location of the generated checkstyle report")
     val checkstyleHeaderFile = SettingKey[File](
@@ -55,45 +57,41 @@ object CheckstylePlugin extends AutoPlugin {
     /** Runs checkstyle
       * @param c The configuration (Compile or Test) in which context to execute the checkstyle command
       * @see [[https://www.scala-sbt.org/1.x/docs/Tasks.html#Dynamic+Computations+with Dynamic Computations with Def.taskDyn]] */
-    def checkstyleTask(c: Configuration): Initialize[Task[Int]] = Def.taskDyn {
+    def checkstyleTask(c: Configuration): Initialize[Task[Unit]] = Def.taskDyn {
       val sourceFiles = (c / checkstyle / sources).value
       if (sourceFiles.isEmpty) {
-        Def.task { 0 }
+        Def.task { }
       } else {
-        Def.sequential(
-          checkstyleRunTask(c),
-          checkstylePostProcessTask(c)
-        )
+        checkstyleRunTask(c)
       }
     }
 
     private def checkstyleRunTask(c: Configuration) = Def.task {
+      val log = (checkstyle / streams).value.log
+
       val r: ScalaRun = (checkstyle / runner).value
       val classpath = (CheckstyleLibs / managedClasspath).value.files
       val runOpts = (c / checkstyleRunOpts).value
-      r.run("com.puppycrawl.tools.checkstyle.Main", classpath, runOpts, Logger.Null)
-    }
+      r.run("com.puppycrawl.tools.checkstyle.Main", classpath, runOpts, Logger.Null) match {
+        case Success(_) => // continue
+        case Failure(e) => log.error(e.getMessage)
+      }
 
-    /** xslt transform & count issues */
-    private def checkstylePostProcessTask(c: Configuration) = Def.task {
+      // checkstylePostProcessTask: xslt transform & count issues
       val outputFile = (c / checkstyleOutputFile).value
       val transformerOpt = (c / checkstyleXsltTransformations).value
       val severityOpt = (c / checkstyleSeverityLevel).value
 
-      val log = (checkstyle / streams).value.log
-      val logPrefix = s"${name.value} / checkstyle"
-
-      if (!outputFile.exists) {
-        0
-      } else {
+      if (outputFile.exists) {
         transformerOpt.foreach { Checkstyle.applyXSLT(outputFile, _) }
         severityOpt.map { Checkstyle.processIssues(log, outputFile, _) } match {
-          case Some(issuesFound) if issuesFound > 0 =>
-            log.error(s"$logPrefix: $issuesFound issue(s) found in Checkstyle report: $outputFile")
-            issuesFound
-          case _ =>
-            log.info(s"$logPrefix success")
-            0
+          case None =>
+            log.info("checkstyle done")
+          case Some(0) =>
+            log.info(s"checkstyle success (on SeverityLevel ${severityOpt.get})")
+          case Some(issuesFound) =>
+            // fail the build
+            sys.error(s"checkstyle: $issuesFound issue(s) found in Checkstyle report $outputFile")
         }
       }
     }
@@ -140,21 +138,19 @@ object CheckstylePlugin extends AutoPlugin {
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
     checkstyleXsltTransformations := None,
-    checkstyleSeverityLevel := Some(CheckstyleSeverityLevel.Error),
+    checkstyleSeverityLevel := None,
     libraryDependencies += "com.puppycrawl.tools" % "checkstyle" % "8.29" % CheckstyleLibs,
     CheckstyleLibs / managedClasspath := Classpaths
       .managedJars(CheckstyleLibs, classpathTypes.value, update.value),
     checkstyle / fork := true,
     checkstyleProperties := {
-      val log = streams.value.log
       val f = checkstyleHeaderFile.value
       if (f.name.isEmpty) {
         Map.empty
       } else if (f.exists) {
         Map("checkstyle.header.file" -> f.getAbsolutePath)
       } else {
-        log.warn(s"checkstyleHeaderFile not found: $f")
-        Map.empty
+        sys.error(s"checkstyleHeaderFile not found: $f")
       }
     },
     checkstyle / forkOptions := (Compile / forkOptions).value,

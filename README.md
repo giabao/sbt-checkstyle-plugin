@@ -82,7 +82,7 @@ checkstyleXsltTransformations := {
 
 ### Failing the build
 
-You can control what severity of issues will be log as `[error]` by setting the `checkstyleSeverityLevel` in your `build.sbt` as follows:
+You can control what severity of issues should break the build by setting the `checkstyleSeverityLevel` in your `build.sbt` as follows:
 ```scala
 checkstyleSeverityLevel := Some(CheckstyleSeverityLevel.Error)
 ```
@@ -131,7 +131,7 @@ dependencyOverrides += "com.puppycrawl.tools" % "checkstyle" % "8.29" % Checksty
 ### `checkstyleSeverityLevel`
 * *Description:* Decide how much effort to put into analysis.
 * *Accepts:* `Some(CheckstyleSeverityLevel.{Ignore, Info, Warning, Error})`
-* *Default:* `Some(Error)`
+* *Default:* `None`
 
 ### `checkstyleHeaderFile`
 Similar to maven-checkstyle-plugin's [headerLocation param](https://maven.apache.org/plugins/maven-checkstyle-plugin/check-mojo.html#headerLocation)
@@ -186,9 +186,7 @@ https://www.scala-sbt.org/1.x/docs/Bintray-For-Plugins.html
 + Fix CheckstyleConfigLocation.Classpath (`checkstyle-config-classpath` sbt-test failed)
 + Add `CheckstyleConfigLocation.Classpath(path/to/resource, a-classpath)`.
   For example, `a-classpath` can be `(Compile / exportedProducts).value`
-+ `checkstyle` task now return the num of issues has severity > `CheckstyleSeverityLevel.value`
-+ `CheckstyleSeverityLevel` change default from `None` to `Some(Error)`
-+ Don't call `sys.exit` when `checkstyle.value > 0`
++ Call `sys.error` instead of `sys.exit` when `checkstyleSeverityLevel.isDefined` && checkstyle found issues has `severity > checkstyleSeverityLevel`
 + Change the way to [Upgrading Checkstyle version](#upgrading-checkstyle-version)
 + Add `autoImport.checkstyleSettings` for using with other configurations such as [Integration tests](#integration-tests)
   
