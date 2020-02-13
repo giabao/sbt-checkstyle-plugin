@@ -13,7 +13,7 @@ This is a fork of the sbt-code-quality project found
 
 Add the following lines to `project/plugins.sbt`:
 ```sbt
-addSbtPlugin("com.sandinh" % "sbt-checkstyle" % "3.2.0")
+addSbtPlugin("com.sandinh" % "sbt-checkstyle" % "3.2.1")
 ```
 `sbt-checkstyle` is an AutoPlugin, so there is no need to modify the `build.sbt` file to enable it.
 
@@ -162,6 +162,11 @@ scripted
 https://www.scala-sbt.org/1.x/docs/Bintray-For-Plugins.html
 
 ## changelogs
+#### 3.2.1
++ default `checkstyle / fork := false`
++ improve logging
++ Dont modify `sys.props` when running `checkstyle` in `fork := false` mode
+
 #### 3.2.0
 + Change organization & name from `"com.etsy" % "sbt-checkstyle-plugin"` to `"com.sandinh" % "sbt-checkstyle"`
 + `sbt-checkstyle` is now published to bintray as in [this guide](https://www.scala-sbt.org/1.x/docs/Bintray-For-Plugins.html)
