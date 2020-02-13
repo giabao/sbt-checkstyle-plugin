@@ -126,18 +126,35 @@ object CheckstylePlugin extends AutoPlugin {
       PathFinder(d).globRecursive(filter).get()
     }
   }
+
+  /** @return `-p tempPropertiesFile` if checkstyleProperties.nonEmpty
+    * @note tempPropertiesFile will be auto deleted after `c / checkstyle` task */
+  private def propertiesFileTask(c: Configuration) = Def.task {
+    val props = checkstyleProperties.value
+    val tmp = (c / checkstyle / taskTemporaryDirectory).value / "checkstyle.properties"
+    if (props.isEmpty) {
+      Seq.empty[String]
+    } else {
+      val lines = props.map { case (k, v) => s"$k=$v" }
+      IO.writeLines(tmp, lines.toSeq)
+      Seq("-p", tmp.getAbsolutePath)
+    }
+  }
+
   /** arguments pass to run [[com.puppycrawl.tools.checkstyle.Main.main]] */
   private def runOptsTask(c: Configuration) = Def.task {
     val sourceFiles = (c / checkstyle / sources).value
     val configFile = (c / checkstyleConfigLocation).value
     val outputFile = (c / checkstyleOutputFile).value
+
+    val propsArgs = propertiesFileTask(c).value
     Seq(
       // format: off
       "-c", configFile.getAbsolutePath, // checkstyle configuration file
       "-f", "xml", // output format
       "-o", outputFile.absolutePath // output file
       // format: on
-    ) ++ sourceFiles.map(_.absolutePath)
+    ) ++ propsArgs ++ sourceFiles.map(_.absolutePath)
   }
 
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
@@ -157,16 +174,12 @@ object CheckstylePlugin extends AutoPlugin {
         sys.error(s"checkstyleHeaderFile not found: $f")
       }
     },
-    checkstyle / forkOptions := (Compile / forkOptions).value,
     checkstyle / runner := {
-      val props = checkstyleProperties.value
       val trap = (checkstyle / trapExit).value
       val forkOpts = (checkstyle / forkOptions).value
       if ((checkstyle / fork).value) {
-        val jvmOpts = forkOpts.runJVMOptions ++ props.map { case (k, v) => s"-D$k=$v" }
-        new ForkRun(forkOpts.withRunJVMOptions(jvmOpts))
+        new ForkRun(forkOpts)
       } else {
-        props.foreach { case (k, v) => sys.props(k) = v }
         new Run(clsLoader, trap)
       }
     },
