@@ -9,7 +9,7 @@ lazy val root = (project in file("."))
   .enablePlugins(SbtPlugin)
   .settings(
     name := "sbt-checkstyle",
-    version := "3.2.0-SNAPSHOT",
+    version := "3.2.0",
     Compile / doc / sources := Nil,
     Test / publishArtifact := false,
     scalaVersion := "2.12.10",
