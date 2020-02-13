@@ -32,6 +32,10 @@ object CheckstylePlugin extends AutoPlugin {
     val CheckstyleLibs = config("CheckstyleLibs")
 
     val checkstyle = taskKey[Unit]("Runs checkstyle")
+    val checkstyleAll = taskKey[Unit](
+      "Run the checkstyle task for all configurations in which it is enabled. " +
+        "(By default this means the Compile and Test configurations)"
+    )
     val checkstyleOutputFile =
       SettingKey[File]("checkstyleOutputFile", "The location of the generated checkstyle report")
     val checkstyleHeaderFile = SettingKey[File](
@@ -157,7 +161,12 @@ object CheckstylePlugin extends AutoPlugin {
     ) ++ propsArgs ++ sourceFiles.map(_.absolutePath)
   }
 
+  private val anyConfigsInThisProject = ScopeFilter(
+    configurations = inAnyConfiguration
+  )
+
   override lazy val projectSettings: Seq[Setting[_]] = Seq(
+    checkstyleAll := checkstyle.?.all(anyConfigsInThisProject).value,
     checkstyleXsltTransformations := None,
     checkstyleSeverityLevel := None,
     libraryDependencies += "com.puppycrawl.tools" % "checkstyle" % "8.29" % CheckstyleLibs,

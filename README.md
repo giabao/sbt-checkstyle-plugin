@@ -162,6 +162,10 @@ scripted
 https://www.scala-sbt.org/1.x/docs/Bintray-For-Plugins.html
 
 ## changelogs
+#### 3.2.2
++ Add task `checkstyleAll` to tun the `checkstyle` task for all configurations in which it is enabled.
+  (By default this means the Compile and Test configurations).
+
 #### 3.2.1
 + default `checkstyle / fork := false`
 + improve logging
