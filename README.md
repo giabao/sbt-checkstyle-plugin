@@ -1,4 +1,4 @@
-# sbt-checkstyle-plugin [![Build Status](https://travis-ci.org/giabao/sbt-checkstyle-plugin.svg?branch=master)](https://travis-ci.org/giabao/sbt-checkstyle-plugin)
+# sbt-checkstyle-plugin [![Build Status](https://travis-ci.org/etsy/sbt-checkstyle-plugin.svg?branch=master)](https://travis-ci.org/etsy/sbt-checkstyle-plugin)
 
 This project provides an SBT 0.13+ and 1.x plugin for running Checkstyle over
 Java source files.  For more information about Checkstyle, see
@@ -13,9 +13,9 @@ This is a fork of the sbt-code-quality project found
 
 Add the following lines to `project/plugins.sbt`:
 ```sbt
-addSbtPlugin("com.sandinh" % "sbt-checkstyle" % "3.2.0")
+addSbtPlugin("com.etsy" % "sbt-checkstyle-plugin" % "3.2.0")
 ```
-`sbt-checkstyle` is an AutoPlugin, so there is no need to modify the `build.sbt` file to enable it.
+`sbt-checkstyle-plugin` is an AutoPlugin, so there is no need to modify the `build.sbt` file to enable it.
 
 If you still use sbt 0.13.x, please use `"com.etsy" % "sbt-checkstyle" % "3.1.2")`
 
@@ -163,8 +163,7 @@ https://www.scala-sbt.org/1.x/docs/Bintray-For-Plugins.html
 
 ## changelogs
 #### 3.2.0
-+ Change organization & name from `"com.etsy" % "sbt-checkstyle-plugin"` to `"com.sandinh" % "sbt-checkstyle"`
-+ `sbt-checkstyle` is now published to bintray as in [this guide](https://www.scala-sbt.org/1.x/docs/Bintray-For-Plugins.html)
++ `sbt-checkstyle-plugin` is now published to bintray as in [this guide](https://www.scala-sbt.org/1.x/docs/Bintray-For-Plugins.html)
   
   By publishing to bintray, Intellij now can download `sbt sources` of `sbt-checkstyle-plugin`
 + Update default version of checkstyle from 6.15 to 8.29

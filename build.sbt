@@ -1,14 +1,14 @@
 lazy val user = settingKey[String]("github user use in ScmInfo")
 
 lazy val publishSettings = Seq(
-  organization := "com.sandinh", // "com.etsy"
-  user := "giabao" //etsy
+  organization := "com.etsy",
+  user := "etsy"
 )
 
 lazy val root = (project in file("."))
   .enablePlugins(SbtPlugin)
   .settings(
-    name := "sbt-checkstyle",
+    name := "sbt-checkstyle-plugin",
     version := "3.2.0-SNAPSHOT",
     Compile / doc / sources := Nil,
     Test / publishArtifact := false,
